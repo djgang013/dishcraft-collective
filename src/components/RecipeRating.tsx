@@ -66,7 +66,7 @@ const RecipeRating = ({
       
       {totalRatings > 0 && (
         <div className="text-xs text-muted-foreground mt-1">
-          {rating.toFixed(1)} ({totalRatings} {totalRatings === 1 ? "rating" : "ratings"})
+          {typeof rating === 'number' ? rating.toFixed(1) : '0.0'} ({totalRatings} {totalRatings === 1 ? "rating" : "ratings"})
         </div>
       )}
     </div>
