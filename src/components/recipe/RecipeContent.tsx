@@ -41,7 +41,7 @@ const RecipeContent = ({ recipe }: RecipeContentProps) => {
       
       <TabsContent value="comments" className="animate-slide-up">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-border/50">
-          <CommentSection recipeId={recipe.id} />
+          <CommentSection recipeId={Number(recipe.id)} />
         </div>
       </TabsContent>
     </Tabs>
