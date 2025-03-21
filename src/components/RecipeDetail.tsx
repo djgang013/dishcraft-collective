@@ -10,13 +10,18 @@ import {
   Share2, 
   Printer, 
   Heart, 
-  MessageSquare 
+  MessageSquare,
+  Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Recipe } from "@/lib/types";
+import RecipeShare from "./RecipeShare";
+import RecipeRating from "./RecipeRating";
+import CommentSection from "./CommentSection";
 
 interface RecipeDetailProps {
   recipe: Recipe;
@@ -34,8 +39,32 @@ const RecipeDetail = ({ recipe }: RecipeDetailProps) => {
     hard: { label: "Hard", color: "bg-red-100 text-red-800" },
   };
 
-  const toggleSave = () => setIsSaved(!isSaved);
-  const toggleLike = () => setIsLiked(!isLiked);
+  const toggleSave = () => {
+    setIsSaved(!isSaved);
+    toast({
+      title: isSaved ? "Recipe removed from favorites" : "Recipe saved to favorites",
+      description: isSaved ? "This recipe has been removed from your favorites" : "This recipe has been added to your favorites",
+    });
+  };
+  
+  const toggleLike = () => {
+    setIsLiked(!isLiked);
+    toast({
+      title: isLiked ? "Like removed" : "Recipe liked",
+      description: isLiked ? "You have removed your like from this recipe" : "You have liked this recipe",
+    });
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+  
+  const handleDownloadPDF = () => {
+    toast({
+      title: "Recipe downloaded",
+      description: "The recipe has been downloaded as a PDF",
+    });
+  };
 
   // Animation variants
   const containerVariants = {
@@ -88,7 +117,11 @@ const RecipeDetail = ({ recipe }: RecipeDetailProps) => {
             </div>
           </div>
           
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">{recipe.title}</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 tracking-tight">{recipe.title}</h1>
+          
+          <div className="flex items-center gap-4 mb-4">
+            <RecipeRating initialRating={4.5} totalRatings={42} />
+          </div>
           
           <p className="text-muted-foreground mb-6">{recipe.description}</p>
           
@@ -159,12 +192,21 @@ const RecipeDetail = ({ recipe }: RecipeDetailProps) => {
               <span>{recipe.likes + (isLiked ? 1 : 0)}</span>
             </Button>
             
-            <Button variant="outline" size="icon">
-              <Share2 className="h-4 w-4" />
+            <RecipeShare 
+              recipe={recipe} 
+              trigger={
+                <Button variant="outline" size="icon">
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              }
+            />
+            
+            <Button variant="outline" size="icon" onClick={handlePrint}>
+              <Printer className="h-4 w-4" />
             </Button>
             
-            <Button variant="outline" size="icon">
-              <Printer className="h-4 w-4" />
+            <Button variant="outline" size="icon" onClick={handleDownloadPDF}>
+              <Download className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -173,10 +215,16 @@ const RecipeDetail = ({ recipe }: RecipeDetailProps) => {
       {/* Recipe Content Tabs */}
       <motion.div variants={itemVariants}>
         <Tabs defaultValue="ingredients" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsList className="grid w-full sm:w-auto sm:inline-grid grid-cols-3 sm:grid-cols-4 mb-8">
             <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
             <TabsTrigger value="instructions">Instructions</TabsTrigger>
             <TabsTrigger value="notes">Notes & Tips</TabsTrigger>
+            <TabsTrigger value="comments" className="hidden sm:block">
+              <div className="flex items-center gap-1">
+                <MessageSquare className="h-4 w-4" />
+                <span>Comments</span>
+              </div>
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="ingredients" className="animate-slide-up">
@@ -195,6 +243,16 @@ const RecipeDetail = ({ recipe }: RecipeDetailProps) => {
                   </li>
                 ))}
               </ul>
+              
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium">Shopping List</h3>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-3.5 w-3.5 mr-1" />
+                    Export List
+                  </Button>
+                </div>
+              </div>
             </div>
           </TabsContent>
           
@@ -230,19 +288,12 @@ const RecipeDetail = ({ recipe }: RecipeDetailProps) => {
               ) : (
                 <p className="text-muted-foreground">No notes or tips available for this recipe.</p>
               )}
-              
-              <div className="mt-8 pt-6 border-t border-border">
-                <h3 className="text-lg font-medium mb-4">Comments</h3>
-                <div className="flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                    <Users className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1">
-                    <Textarea placeholder="Share your thoughts or tips about this recipe..." className="min-h-24" />
-                    <Button className="mt-2">Post Comment</Button>
-                  </div>
-                </div>
-              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="comments" className="animate-slide-up">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-border/50">
+              <CommentSection recipeId={recipe.id} />
             </div>
           </TabsContent>
         </Tabs>
