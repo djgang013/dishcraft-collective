@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -8,25 +8,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import { motion } from "framer-motion";
 import { Separator } from "@/components/ui/separator";
-import { Bell, Shield, Moon, LogOut } from "lucide-react";
+import { Bell, Shield, Moon, LogOut, ArrowLeft } from "lucide-react";
 
 const Settings = () => {
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const navigate = useNavigate();
   
   const [preferences, setPreferences] = useState({
     emailNotifications: true,
     pushNotifications: false,
-    darkMode: false,
     privacyProfile: true,
     privacyRecipes: false,
   });
 
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+  }, [user, navigate]);
+
   if (!user) {
-    navigate("/login");
     return null;
   }
 
@@ -39,6 +46,15 @@ const Settings = () => {
     toast({
       title: "Setting updated",
       description: "Your preference has been saved.",
+    });
+  };
+
+  const handleDarkModeToggle = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+    
+    toast({
+      title: `${theme === 'dark' ? 'Light' : 'Dark'} mode activated`,
+      description: `Theme has been changed to ${theme === 'dark' ? 'light' : 'dark'} mode.`,
     });
   };
 
@@ -58,7 +74,14 @@ const Settings = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-3xl font-bold mb-8">Settings</h1>
+        <div className="flex items-center gap-2 mb-8">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/dashboard">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          </Button>
+          <h1 className="text-3xl font-bold">Settings</h1>
+        </div>
 
         <Tabs defaultValue="preferences">
           <TabsList className="mb-6">
@@ -85,8 +108,8 @@ const Settings = () => {
                     </p>
                   </div>
                   <Switch
-                    checked={preferences.darkMode}
-                    onCheckedChange={() => handleToggle('darkMode')}
+                    checked={theme === 'dark'}
+                    onCheckedChange={handleDarkModeToggle}
                   />
                 </div>
               </CardContent>

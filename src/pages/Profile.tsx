@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
+import { ArrowLeft, ChefHat } from "lucide-react";
 
 const Profile = () => {
   const { user, logout } = useAuth();
@@ -17,12 +18,23 @@ const Profile = () => {
   const navigate = useNavigate();
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
-    username: user?.username || "",
-    email: user?.email || "",
+    username: "",
+    email: "",
   });
 
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    
+    setFormData({
+      username: user.username || "",
+      email: user.email || "",
+    });
+  }, [user, navigate]);
+
   if (!user) {
-    navigate("/login");
     return null;
   }
 
@@ -49,7 +61,14 @@ const Profile = () => {
         transition={{ duration: 0.5 }}
       >
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold">My Profile</h1>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/dashboard">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+            </Button>
+            <h1 className="text-3xl font-bold">My Profile</h1>
+          </div>
           <Button
             variant={isEditMode ? "outline" : "default"}
             onClick={() => setIsEditMode(!isEditMode)}
@@ -68,6 +87,20 @@ const Profile = () => {
                 </Avatar>
                 <h2 className="text-xl font-semibold">{user.username}</h2>
                 <p className="text-muted-foreground">{user.email}</p>
+                
+                <div className="flex gap-2 mt-4 w-full">
+                  <Button variant="outline" className="w-full mt-4" asChild>
+                    <Link to="/dashboard">
+                      <ChefHat className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="w-full mt-4" asChild>
+                    <Link to="/settings">
+                      Settings
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
