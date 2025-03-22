@@ -8,7 +8,7 @@ interface RecipeInstructionsProps {
 
 const RecipeInstructions = ({ recipe }: RecipeInstructionsProps) => {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-border/50">
+    <div className="bg-card rounded-xl p-6 shadow-sm border border-border/50">
       <h2 className="text-xl font-semibold mb-4">Instructions</h2>
       <ol className="space-y-6">
         {recipe.instructions.map((step, index) => (

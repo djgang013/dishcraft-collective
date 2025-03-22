@@ -8,7 +8,7 @@ interface RecipeNotesProps {
 
 const RecipeNotes = ({ recipe }: RecipeNotesProps) => {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-border/50">
+    <div className="bg-card rounded-xl p-6 shadow-sm border border-border/50">
       <h2 className="text-xl font-semibold mb-4">Notes & Tips</h2>
       {recipe.notes && recipe.notes.length > 0 ? (
         <ul className="space-y-4">

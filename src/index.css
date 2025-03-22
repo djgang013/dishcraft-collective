@@ -131,7 +131,7 @@
   }
   
   .recipe-card {
-    @apply overflow-hidden rounded-xl transition-all duration-500 hover:shadow-lg bg-white border border-border/50 hover:border-border;
+    @apply overflow-hidden rounded-xl transition-all duration-500 hover:shadow-lg bg-card border border-border/50 hover:border-border dark:bg-card;
   }
   
   .btn-icon {
