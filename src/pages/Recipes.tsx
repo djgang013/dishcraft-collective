@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -9,7 +8,8 @@ import {
   ChefHat,
   Utensils,
   SlidersHorizontal,
-  X
+  X,
+  Bookmark
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,32 +64,25 @@ const Recipes = () => {
   const [difficulty, setDifficulty] = useState<string[]>([]);
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
   
-  // Apply filters to recipes
   const filteredRecipes = mockRecipes.filter(recipe => {
-    // Search filter
     const matchesSearch = 
       searchQuery === "" || 
       recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       recipe.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       recipe.ingredients.some(ing => ing.name.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    // Category filter
     const matchesCategory = 
       selectedCategory === "All" || 
       recipe.category.toLowerCase() === selectedCategory.toLowerCase();
     
-    // Time filter
     const matchesTime = recipe.prepTime <= maxPrepTime;
     
-    // Difficulty filter
     const matchesDifficulty = 
       difficulty.length === 0 || 
       difficulty.includes(recipe.difficulty);
     
-    // Dietary filter (mocked - in real implementation, recipes would have dietary tags)
     const matchesDietary = selectedDietary.length === 0;
     
-    // Bookmarks filter
     const matchesBookmarks = 
       !showBookmarksOnly || 
       bookmarks.includes(recipe.id);
@@ -97,17 +90,14 @@ const Recipes = () => {
     return matchesSearch && matchesCategory && matchesTime && matchesDifficulty && matchesDietary && matchesBookmarks;
   });
   
-  // Clear search
   const clearSearch = () => {
     setSearchQuery("");
   };
   
-  // Toggle bookmarks filter
   const toggleBookmarksFilter = () => {
     setShowBookmarksOnly(!showBookmarksOnly);
   };
   
-  // Update active filters display
   useEffect(() => {
     const filters = [];
     if (selectedCategory !== "All") filters.push(selectedCategory);
@@ -119,7 +109,6 @@ const Recipes = () => {
     setActiveFilters(filters);
   }, [selectedCategory, maxPrepTime, difficulty, selectedDietary, showBookmarksOnly]);
   
-  // Handle dietary preferences change
   const handleDietaryChange = (id: string) => {
     setSelectedDietary(prev => 
       prev.includes(id) 
@@ -128,7 +117,6 @@ const Recipes = () => {
     );
   };
   
-  // Handle difficulty change
   const handleDifficultyChange = (value: string) => {
     setDifficulty(prev => 
       prev.includes(value) 
@@ -137,7 +125,6 @@ const Recipes = () => {
     );
   };
   
-  // Clear all filters
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedCategory("All");
@@ -147,7 +134,6 @@ const Recipes = () => {
     setShowBookmarksOnly(false);
   };
   
-  // Remove a specific filter
   const removeFilter = (filter: string) => {
     if (categoryOptions.includes(filter)) {
       setSelectedCategory("All");
@@ -162,7 +148,6 @@ const Recipes = () => {
     }
   };
   
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
