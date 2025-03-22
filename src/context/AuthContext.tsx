@@ -3,18 +3,29 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 
+type UserType = "chef" | "amateur" | "blogger";
+
 interface User {
   id: string;
   username: string;
   email: string;
+  userType?: UserType;
+  bio?: string;
+  website?: string;
+  socialLinks?: {
+    instagram?: string;
+    twitter?: string;
+    facebook?: string;
+  };
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (username: string, email: string, password: string) => Promise<boolean>;
+  register: (username: string, email: string, password: string, userType?: UserType) => Promise<boolean>;
   logout: () => void;
+  updateProfile: (profileData: Partial<User>) => Promise<boolean>;
   bookmarks: string[];
   toggleBookmark: (recipeId: string) => void;
   isBookmarked: (recipeId: string) => boolean;
@@ -64,10 +75,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Simple validation to mimic authentication
       if (email && password.length >= 6) {
-        const newUser = {
+        // Retrieve stored user if available
+        const storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
+        const foundUser = storedUsers.find((u: User) => u.email === email);
+        
+        const newUser = foundUser || {
           id: Math.random().toString(36).substr(2, 9),
           username: email.split("@")[0],
           email,
+          userType: "amateur",
         };
         
         setUser(newUser);
@@ -98,7 +114,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (username: string, email: string, password: string): Promise<boolean> => {
+  const register = async (
+    username: string, 
+    email: string, 
+    password: string, 
+    userType: UserType = "amateur"
+  ): Promise<boolean> => {
     // In a real app, this would connect to an API
     try {
       // Simple validation to mimic registration
@@ -107,7 +128,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: Math.random().toString(36).substr(2, 9),
           username,
           email,
+          userType,
+          bio: "",
+          website: "",
+          socialLinks: {
+            instagram: "",
+            twitter: "",
+            facebook: "",
+          }
         };
+        
+        // Store in users array
+        const storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
+        storedUsers.push(newUser);
+        localStorage.setItem("users", JSON.stringify(storedUsers));
         
         setUser(newUser);
         setIsAuthenticated(true);
@@ -115,7 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         toast({
           title: "Registration successful",
-          description: "Your SmartRecipe account has been created!"
+          description: `Your SmartRecipe account has been created as a ${userType}!`
         });
         
         return true;
@@ -131,6 +165,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast({
         title: "Registration failed",
         description: "An error occurred during registration.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const updateProfile = async (profileData: Partial<User>): Promise<boolean> => {
+    try {
+      if (!user) {
+        throw new Error("User not logged in");
+      }
+      
+      const updatedUser = { ...user, ...profileData };
+      
+      // Update in users array
+      const storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
+      const updatedUsers = storedUsers.map((u: User) => 
+        u.id === user.id ? updatedUser : u
+      );
+      localStorage.setItem("users", JSON.stringify(updatedUsers));
+      
+      // Update current user
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile information has been updated successfully.",
+      });
+      
+      return true;
+    } catch (error) {
+      toast({
+        title: "Update failed",
+        description: "An error occurred while updating your profile.",
         variant: "destructive",
       });
       return false;
@@ -180,6 +249,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         register,
         logout,
+        updateProfile,
         bookmarks,
         toggleBookmark,
         isBookmarked,

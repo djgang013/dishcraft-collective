@@ -3,23 +3,42 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
-import { ArrowLeft, ChefHat } from "lucide-react";
+import { ArrowLeft, ChefHat, Globe, Instagram, Twitter, Facebook } from "lucide-react";
+
+const userTypeColors = {
+  chef: "bg-blue-500",
+  amateur: "bg-green-500",
+  blogger: "bg-purple-500",
+};
+
+const userTypeLabels = {
+  chef: "Professional Chef",
+  amateur: "Food Enthusiast",
+  blogger: "Food Blogger",
+};
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
     email: "",
+    bio: "",
+    website: "",
+    instagram: "",
+    twitter: "",
+    facebook: "",
   });
 
   useEffect(() => {
@@ -31,6 +50,11 @@ const Profile = () => {
     setFormData({
       username: user.username || "",
       email: user.email || "",
+      bio: user.bio || "",
+      website: user.website || "",
+      instagram: user.socialLinks?.instagram || "",
+      twitter: user.socialLinks?.twitter || "",
+      facebook: user.socialLinks?.facebook || "",
     });
   }, [user, navigate]);
 
@@ -38,20 +62,33 @@ const Profile = () => {
     return null;
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would send an API request to update the user profile
-    toast({
-      title: "Profile updated",
-      description: "Your profile information has been updated successfully.",
-    });
-    setIsEditMode(false);
+    
+    const updatedProfile = {
+      username: formData.username,
+      bio: formData.bio,
+      website: formData.website,
+      socialLinks: {
+        instagram: formData.instagram,
+        twitter: formData.twitter,
+        facebook: formData.facebook,
+      },
+    };
+    
+    const success = await updateProfile(updatedProfile);
+    if (success) {
+      setIsEditMode(false);
+    }
   };
+
+  const userTypeColor = user.userType ? userTypeColors[user.userType] : "bg-gray-500";
+  const userTypeLabel = user.userType ? userTypeLabels[user.userType] : "User";
 
   return (
     <div className="container max-w-4xl mx-auto pt-24 pb-16 px-4">
@@ -88,6 +125,10 @@ const Profile = () => {
                 <h2 className="text-xl font-semibold">{user.username}</h2>
                 <p className="text-muted-foreground">{user.email}</p>
                 
+                <Badge className={`mt-2 ${userTypeColor} hover:${userTypeColor}`}>
+                  {userTypeLabel}
+                </Badge>
+                
                 <div className="flex gap-2 mt-4 w-full">
                   <Button variant="outline" className="w-full mt-4" asChild>
                     <Link to="/dashboard">
@@ -108,9 +149,9 @@ const Profile = () => {
           <div className="md:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Account Information</CardTitle>
+                <CardTitle>Profile Information</CardTitle>
                 <CardDescription>
-                  Manage your personal information and account settings
+                  Manage your personal information and profile settings
                 </CardDescription>
               </CardHeader>
               <form onSubmit={handleSubmit}>
@@ -132,9 +173,85 @@ const Profile = () => {
                       name="email"
                       type="email"
                       value={formData.email}
+                      disabled={true}  // Email cannot be changed
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">Bio</Label>
+                    <Textarea
+                      id="bio"
+                      name="bio"
+                      placeholder="Tell us about yourself and your cooking style..."
+                      value={formData.bio}
                       onChange={handleChange}
                       disabled={!isEditMode}
+                      className="min-h-24"
                     />
+                  </div>
+                  
+                  <Separator className="my-4" />
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website</Label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="website"
+                        name="website"
+                        placeholder="https://yourwebsite.com"
+                        value={formData.website}
+                        onChange={handleChange}
+                        disabled={!isEditMode}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium">Social Media</h3>
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="instagram"
+                          name="instagram"
+                          placeholder="Instagram username"
+                          value={formData.instagram}
+                          onChange={handleChange}
+                          disabled={!isEditMode}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Twitter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="twitter"
+                          name="twitter"
+                          placeholder="Twitter username"
+                          value={formData.twitter}
+                          onChange={handleChange}
+                          disabled={!isEditMode}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Facebook className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="facebook"
+                          name="facebook"
+                          placeholder="Facebook username"
+                          value={formData.facebook}
+                          onChange={handleChange}
+                          disabled={!isEditMode}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
                 {isEditMode && (

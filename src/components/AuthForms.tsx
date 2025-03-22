@@ -16,6 +16,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
 
 // Login form schema
@@ -30,6 +37,9 @@ const registerSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   confirmPassword: z.string(),
+  userType: z.enum(["chef", "amateur", "blogger"], {
+    required_error: "Please select a user type",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -162,11 +172,12 @@ export const RegisterForm = () => {
       email: "",
       password: "",
       confirmPassword: "",
+      userType: "amateur",
     },
   });
   
   const onSubmit = async (data: RegisterFormValues) => {
-    const success = await register(data.username, data.email, data.password);
+    const success = await register(data.username, data.email, data.password, data.userType);
     if (success) {
       navigate("/dashboard");
     }
@@ -176,7 +187,7 @@ export const RegisterForm = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-md mx-auto p-6 bg-white rounded-xl shadow-sm"
+      className="w-full max-w-md mx-auto p-6 bg-card rounded-xl shadow-sm"
     >
       <div className="flex flex-col items-center mb-6">
         <ChefHat className="h-10 w-10 text-primary mb-2" />
@@ -223,6 +234,32 @@ export const RegisterForm = () => {
                     />
                   </div>
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="userType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>I am a</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your profile type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="chef">Professional Chef</SelectItem>
+                    <SelectItem value="amateur">Food Enthusiast</SelectItem>
+                    <SelectItem value="blogger">Food Blogger</SelectItem>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
