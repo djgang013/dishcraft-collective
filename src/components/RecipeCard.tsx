@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Clock, Bookmark, BookmarkCheck, ChefHat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 interface RecipeCardProps {
   id: string;
@@ -25,8 +26,9 @@ const RecipeCard = ({
   difficulty,
   index = 0 
 }: RecipeCardProps) => {
-  const [isSaved, setIsSaved] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const { isBookmarked, toggleBookmark } = useAuth();
+  const isSaved = isBookmarked(id);
 
   // Map difficulty to appropriate styling
   const difficultyMap = {
@@ -35,10 +37,10 @@ const RecipeCard = ({
     hard: { label: "Hard", color: "bg-red-100 text-red-800" },
   };
 
-  const toggleSave = (e: React.MouseEvent) => {
+  const handleBookmark = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsSaved(!isSaved);
+    toggleBookmark(id);
   };
 
   return (
@@ -68,7 +70,7 @@ const RecipeCard = ({
             variant="ghost"
             size="icon"
             className="absolute top-2 right-2 rounded-full bg-white/80 hover:bg-white shadow-sm z-10"
-            onClick={toggleSave}
+            onClick={handleBookmark}
           >
             {isSaved ? (
               <BookmarkCheck className="h-4 w-4 text-primary" />

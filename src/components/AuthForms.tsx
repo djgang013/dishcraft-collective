@@ -16,7 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
 // Login form schema
 const loginSchema = z.object({
@@ -41,6 +41,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export const LoginForm = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const { login } = useAuth();
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -50,17 +51,11 @@ export const LoginForm = () => {
     },
   });
   
-  const onSubmit = (data: LoginFormValues) => {
-    console.log("Login data:", data);
-    
-    // Simulate login success - in a real app, this would connect to an API
-    toast({
-      title: "Login successful",
-      description: "Welcome back to SmartRecipe!"
-    });
-    
-    // Redirect to dashboard
-    navigate("/dashboard");
+  const onSubmit = async (data: LoginFormValues) => {
+    const success = await login(data.email, data.password);
+    if (success) {
+      navigate("/dashboard");
+    }
   };
   
   return (
@@ -158,6 +153,7 @@ export const LoginForm = () => {
 export const RegisterForm = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const { register } = useAuth();
   
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -169,17 +165,11 @@ export const RegisterForm = () => {
     },
   });
   
-  const onSubmit = (data: RegisterFormValues) => {
-    console.log("Register data:", data);
-    
-    // Simulate registration success - in a real app, this would connect to an API
-    toast({
-      title: "Registration successful",
-      description: "Your SmartRecipe account has been created!"
-    });
-    
-    // Redirect to dashboard
-    navigate("/dashboard");
+  const onSubmit = async (data: RegisterFormValues) => {
+    const success = await register(data.username, data.email, data.password);
+    if (success) {
+      navigate("/dashboard");
+    }
   };
   
   return (

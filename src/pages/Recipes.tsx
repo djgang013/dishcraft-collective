@@ -8,7 +8,8 @@ import {
   Clock, 
   ChefHat,
   Utensils,
-  SlidersHorizontal
+  SlidersHorizontal,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import RecipeCard from "@/components/RecipeCard";
 import { mockRecipes } from "@/lib/types";
+import { useAuth } from "@/context/AuthContext";
 
 const categoryOptions = [
   "All", "Appetizer", "Main Course", "Dessert", "Beverage", 
@@ -53,12 +55,14 @@ const dietaryOptions = [
 
 const Recipes = () => {
   const navigate = useNavigate();
+  const { bookmarks } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [maxPrepTime, setMaxPrepTime] = useState(90); // 90 minutes
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
   const [difficulty, setDifficulty] = useState<string[]>([]);
+  const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
   
   // Apply filters to recipes
   const filteredRecipes = mockRecipes.filter(recipe => {
@@ -85,8 +89,23 @@ const Recipes = () => {
     // Dietary filter (mocked - in real implementation, recipes would have dietary tags)
     const matchesDietary = selectedDietary.length === 0;
     
-    return matchesSearch && matchesCategory && matchesTime && matchesDifficulty && matchesDietary;
+    // Bookmarks filter
+    const matchesBookmarks = 
+      !showBookmarksOnly || 
+      bookmarks.includes(recipe.id);
+    
+    return matchesSearch && matchesCategory && matchesTime && matchesDifficulty && matchesDietary && matchesBookmarks;
   });
+  
+  // Clear search
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
+  
+  // Toggle bookmarks filter
+  const toggleBookmarksFilter = () => {
+    setShowBookmarksOnly(!showBookmarksOnly);
+  };
   
   // Update active filters display
   useEffect(() => {
@@ -95,9 +114,10 @@ const Recipes = () => {
     if (maxPrepTime < 90) filters.push(`Under ${maxPrepTime} min`);
     if (difficulty.length > 0) filters.push(...difficulty);
     if (selectedDietary.length > 0) filters.push(...selectedDietary);
+    if (showBookmarksOnly) filters.push("Bookmarked");
     
     setActiveFilters(filters);
-  }, [selectedCategory, maxPrepTime, difficulty, selectedDietary]);
+  }, [selectedCategory, maxPrepTime, difficulty, selectedDietary, showBookmarksOnly]);
   
   // Handle dietary preferences change
   const handleDietaryChange = (id: string) => {
@@ -124,6 +144,7 @@ const Recipes = () => {
     setMaxPrepTime(90);
     setDifficulty([]);
     setSelectedDietary([]);
+    setShowBookmarksOnly(false);
   };
   
   // Remove a specific filter
@@ -134,6 +155,8 @@ const Recipes = () => {
       setMaxPrepTime(90);
     } else if (["easy", "medium", "hard"].includes(filter)) {
       setDifficulty(prev => prev.filter(d => d !== filter));
+    } else if (filter === "Bookmarked") {
+      setShowBookmarksOnly(false);
     } else {
       setSelectedDietary(prev => prev.filter(d => d !== filter));
     }
@@ -172,6 +195,16 @@ const Recipes = () => {
             </div>
             
             <div className="flex items-center gap-2 self-end md:self-auto">
+              <Button 
+                variant={showBookmarksOnly ? "default" : "outline"} 
+                size="sm"
+                className="gap-2"
+                onClick={toggleBookmarksFilter}
+              >
+                <Bookmark className="h-4 w-4" />
+                <span className="hidden sm:inline">Bookmarks</span>
+              </Button>
+              
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline" className="gap-2">
@@ -269,6 +302,23 @@ const Recipes = () => {
                       </div>
                     </div>
                     
+                    <div className="pt-2 space-y-2">
+                      <h3 className="text-sm font-medium">Other Filters</h3>
+                      <div className="flex items-center gap-2">
+                        <Checkbox 
+                          id="bookmarks-only" 
+                          checked={showBookmarksOnly}
+                          onCheckedChange={() => setShowBookmarksOnly(!showBookmarksOnly)}
+                        />
+                        <Label 
+                          htmlFor="bookmarks-only"
+                          className="text-sm"
+                        >
+                          Show bookmarked recipes only
+                        </Label>
+                      </div>
+                    </div>
+                    
                     <div className="flex justify-between pt-4">
                       <Button variant="outline" onClick={clearFilters}>
                         Clear All
@@ -288,10 +338,18 @@ const Recipes = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 placeholder="Search recipes by name, ingredients..." 
-                className="pl-9"
+                className="pl-9 pr-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
           
