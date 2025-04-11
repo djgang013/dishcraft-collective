@@ -1,9 +1,9 @@
 
-import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChefHat, Menu, X, User, LogIn, LogOut, Home, Book, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,206 +12,288 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { ChefHat, Search, Menu, X, Home, BookOpen, LogIn, UserCircle, Settings, LogOut, Brain } from "lucide-react";
+import { useMediaQuery } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 
 const Navbar = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isAuthenticated, user, logout } = useAuth();
+  const [scrolled, setScrolled] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const location = useLocation();
-  
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-  
-  const navLinks = [
-    { name: "Home", path: "/", icon: <Home className="h-4 w-4" /> },
-    { name: "Recipes", path: "/recipes", icon: <Book className="h-4 w-4" /> },
-    { name: "Dashboard", path: "/dashboard", icon: <ChefHat className="h-4 w-4" /> },
+  const { user, isAuthenticated, logout } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const offset = window.scrollY;
+      if (offset > 30) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
+
+  // Navigation items
+  const navItems = [
+    { href: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
+    { href: "/recipes", label: "Recipes", icon: <BookOpen className="h-5 w-5" /> },
+    {
+      href: "/ai-features",
+      label: "AI Features", 
+      icon: <Brain className="h-5 w-5" />,
+      requiresAuth: true
+    },
   ];
-  
+
+  const filteredNavItems = navItems.filter(
+    item => !item.requiresAuth || isAuthenticated
+  );
+
   return (
-    <header className="fixed top-0 w-full bg-background/80 backdrop-blur-md z-50 border-b">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
+    <header
+      className={cn(
+        "fixed top-0 left-0 w-full z-50 transition-all duration-300",
+        scrolled || showSearch
+          ? "bg-background shadow-md"
+          : location.pathname === "/"
+          ? "bg-transparent"
+          : "bg-background shadow-sm"
+      )}
+    >
+      <div className="container mx-auto px-4 sm:px-6 flex h-16 items-center justify-between">
+        <div className="flex items-center">
+          <Link to="/" className="flex items-center gap-2 mr-6">
             <ChefHat className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">SmartRecipe</span>
+            <span className="font-bold text-lg">SmartRecipe</span>
           </Link>
-          
-          <nav className="hidden md:flex items-center space-x-1">
-            {navLinks.map((link) => (
-              <Button
-                key={link.path}
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "gap-2",
-                  location.pathname === link.path && "bg-accent text-accent-foreground"
-                )}
-                asChild
-              >
-                <Link to={link.path}>
-                  {link.icon}
-                  {link.name}
-                </Link>
-              </Button>
-            ))}
-          </nav>
-          
-          <div className="flex items-center gap-2">
-            {isAuthenticated ? (
-              <>
-                <Button variant="outline" className="hidden sm:flex gap-2" asChild>
-                  <Link to="/dashboard">
-                    <Plus className="h-4 w-4" />
-                    New Recipe
-                  </Link>
-                </Button>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                      <User />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>
-                      {user?.username || "My Account"}
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link to="/dashboard" className="cursor-pointer">Dashboard</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/profile" className="cursor-pointer">Profile</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/settings" className="cursor-pointer">Settings</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer" onClick={logout}>
-                      <LogOut className="h-4 w-4 mr-2" />
-                      <span>Logout</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            ) : (
-              <>
-                <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
-                  <Link to="/login">
-                    Log in
-                  </Link>
-                </Button>
-                <Button size="sm" asChild>
-                  <Link to="/register">
-                    Sign up
-                  </Link>
-                </Button>
-              </>
-            )}
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={toggleMobileMenu}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </div>
-      
-      {/* Mobile menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t"
-          >
-            <div className="container mx-auto px-4 py-4 flex flex-col space-y-1">
-              <div className="flex justify-end">
+
+          {isDesktop && (
+            <nav className="hidden md:flex items-center gap-1">
+              {filteredNavItems.map((item) => (
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleMobileMenu}
-                >
-                  <X className="h-5 w-5" />
-                </Button>
-              </div>
-              
-              {navLinks.map((link) => (
-                <Button
-                  key={link.path}
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "justify-start gap-2",
-                    location.pathname === link.path && "bg-accent text-accent-foreground"
-                  )}
+                  key={item.href}
                   asChild
-                  onClick={toggleMobileMenu}
+                  variant={location.pathname === item.href ? "secondary" : "ghost"}
                 >
-                  <Link to={link.path}>
-                    {link.icon}
-                    {link.name}
+                  <Link to={item.href}>
+                    {item.icon}
+                    <span className="ml-1">{item.label}</span>
                   </Link>
                 </Button>
               ))}
-              
-              <div className="pt-2 border-t mt-2">
+            </nav>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {showSearch && isDesktop ? (
+            <div className="relative w-64">
+              <Input
+                placeholder="Search recipes..."
+                className="pr-8"
+                autoFocus
+                onBlur={() => setShowSearch(false)}
+              />
+              <button
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowSearch(false)}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowSearch(true)}
+              className="hidden md:flex"
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+          )}
+
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage 
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username}`} 
+                      alt={user?.username} 
+                    />
+                    <AvatarFallback>{user?.username.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel>
+                  <div className="flex flex-col">
+                    <span>{user?.username}</span>
+                    <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard" className="flex items-center cursor-pointer">
+                    <Home className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center cursor-pointer">
+                    <UserCircle className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="flex items-center cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/ai-features" className="flex items-center cursor-pointer">
+                    <Brain className="mr-2 h-4 w-4" />
+                    <span>AI Features</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="hidden md:flex items-center gap-2">
+              <Button variant="ghost" asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/register">Register</Link>
+              </Button>
+            </div>
+          )}
+
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <ChefHat className="h-5 w-5 text-primary" />
+                  <span className="font-bold text-lg">SmartRecipe</span>
+                </SheetTitle>
+              </SheetHeader>
+
+              <div className="py-6 space-y-1">
+                {filteredNavItems.map((item) => (
+                  <Button
+                    key={item.href}
+                    asChild
+                    variant={location.pathname === item.href ? "secondary" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Link to={item.href}>
+                      {item.icon}
+                      <span className="ml-2">{item.label}</span>
+                    </Link>
+                  </Button>
+                ))}
+                
+                <div className="pt-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Search recipes..." className="pl-9" />
+                  </div>
+                </div>
+                
                 {isAuthenticated ? (
                   <>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="w-full justify-start gap-2"
-                      onClick={() => {
-                        logout();
-                        toggleMobileMenu();
-                      }}
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Logout
-                    </Button>
+                    <div className="pt-4">
+                      <Button
+                        asChild
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <Link to="/dashboard">
+                          <Home className="h-5 w-5" />
+                          <span className="ml-2">Dashboard</span>
+                        </Link>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <Link to="/profile">
+                          <UserCircle className="h-5 w-5" />
+                          <span className="ml-2">Profile</span>
+                        </Link>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <Link to="/settings">
+                          <Settings className="h-5 w-5" />
+                          <span className="ml-2">Settings</span>
+                        </Link>
+                      </Button>
+                    </div>
+                    <div className="pt-4">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          logout();
+                          setIsOpen(false);
+                        }}
+                      >
+                        <LogOut className="h-5 w-5" />
+                        <span className="ml-2">Logout</span>
+                      </Button>
+                    </div>
                   </>
                 ) : (
-                  <>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="w-full justify-start gap-2"
-                      asChild
-                      onClick={toggleMobileMenu}
-                    >
+                  <div className="pt-4 grid grid-cols-2 gap-2">
+                    <Button asChild variant="outline" onClick={() => setIsOpen(false)}>
                       <Link to="/login">
-                        <LogIn className="h-4 w-4" />
+                        <LogIn className="h-5 w-5 mr-2" />
                         Login
                       </Link>
                     </Button>
-                    <Button 
-                      variant="default" 
-                      size="sm" 
-                      className="w-full justify-start gap-2 mt-2"
-                      asChild
-                      onClick={toggleMobileMenu}
-                    >
-                      <Link to="/register">
-                        <User className="h-4 w-4" />
-                        Sign up
-                      </Link>
+                    <Button asChild onClick={() => setIsOpen(false)}>
+                      <Link to="/register">Register</Link>
                     </Button>
-                  </>
+                  </div>
                 )}
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
     </header>
   );
 };
