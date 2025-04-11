@@ -69,7 +69,10 @@ const AIImageRecognition = () => {
           <p className="text-muted-foreground mb-6 text-center max-w-md">
             Upload an image of ingredients, and our AI will identify them and suggest recipes you can make
           </p>
-          <Button as="label" htmlFor="image-upload" className="gap-2 cursor-pointer">
+          <Button 
+            onClick={() => document.getElementById('image-upload')?.click()}
+            className="gap-2 cursor-pointer"
+          >
             <Upload className="h-4 w-4" />
             Upload Image
           </Button>

@@ -14,14 +14,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ChefHat, Search, Menu, X, Home, BookOpen, LogIn, UserCircle, Settings, LogOut, Brain } from "lucide-react";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const isDesktop = useIsMobile() === false;
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
